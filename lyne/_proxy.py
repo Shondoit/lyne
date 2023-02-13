@@ -154,16 +154,16 @@ class ProxyMeta(type):
     def apply(cls, obj, args):
         if isinstance(args, dict):
             return {
-                key: Proxy.get_value(value, obj) if isinstance(value, Proxy) else value
+                key: cls.get_value(value, obj) if isinstance(value, cls) else value
                 for key, value in args.items()
             }
         elif isinstance(args, (list, tuple)):
             return args.__class__(
-                Proxy.get_value(arg, obj) if isinstance(arg, Proxy) else arg
+                cls.get_value(arg, obj) if isinstance(arg, cls) else arg
                 for arg in args
             )
         else:
-            return Proxy.get_value(args, obj) if isinstance(args, Proxy) else args
+            return cls.get_value(args, obj) if isinstance(args, cls) else args
 
     def get_value(cls, proxy, obj):
         if not isinstance(proxy, Proxy):
