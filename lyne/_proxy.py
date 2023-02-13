@@ -153,15 +153,21 @@ class ProxyMeta(type):
 
     def apply(cls, obj, args):
         if isinstance(args, dict):
-            return {
-                key: cls.get_value(value, obj) if isinstance(value, cls) else value
-                for key, value in args.items()
-            }
+            if cls.instance_in(args.values()):
+                return {
+                    key: cls.get_value(value, obj) if isinstance(value, cls) else value
+                    for key, value in args.items()
+                }
+            else:
+                return args
         elif isinstance(args, (list, tuple)):
-            return args.__class__(
-                cls.get_value(arg, obj) if isinstance(arg, cls) else arg
-                for arg in args
-            )
+            if cls.instance_in(args):
+                return args.__class__(
+                    cls.get_value(arg, obj) if isinstance(arg, cls) else arg
+                    for arg in args
+                )
+            else:
+                return args
         else:
             return cls.get_value(args, obj) if isinstance(args, cls) else args
 
@@ -172,12 +178,15 @@ class ProxyMeta(type):
             op = proxy.__operations__[0]
             return op.args[0](obj)
         else:
+            orig_obj = obj
             for op in proxy.__operations__:
+                args = type(proxy).apply(orig_obj, op.args)
+                kwargs = type(proxy).apply(orig_obj, op.kwargs)
                 if isinstance(op.func, str):
                     func = getattr(obj, op.func)
-                    obj = func(*op.args, **op.kwargs)
+                    obj = func(*args, **kwargs)
                 else:
-                    obj = op.func(obj, *op.args, **op.kwargs)
+                    obj = op.func(obj, *args, **kwargs)
             return obj
 
     def set_value(cls, proxy, obj, value):
