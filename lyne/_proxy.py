@@ -1,8 +1,27 @@
 import copy
 from collections import namedtuple
+import operator
+import math
 
 
 ProxyOperation = namedtuple('ProxyOperation', ['func', 'args', 'kwargs'], defaults=[(), {}])
+
+
+def _operator_call(obj, /, *args, **kwargs): return obj(*args, **kwargs)
+def _operator_radd(a, b): return b + a
+def _operator_rsub(a, b): return b - a
+def _operator_rmul(a, b): return b * a
+def _operator_rmatmul(a, b): return b @ a
+def _operator_rtruediv(a, b): return b / a
+def _operator_rfloordiv(a, b): return b // a
+def _operator_rmod(a, b): return b % a
+def _operator_rdivmod(a, b): return divmod(b, a)
+def _operator_rpow(a, b): return b ** a
+def _operator_rlshift(a, b): return b << a
+def _operator_rrshift(a, b): return b >> a
+def _operator_rand(a, b): return b & a
+def _operator_rxor(a, b): return b ^ a
+def _operator_ror(a, b): return b | a
 
 
 def _op_appender(func):
@@ -16,68 +35,69 @@ def _format_op(text, op):
     fargs += [f'{key}={value!r}' for key, value in op.kwargs.items()]
     fargs = ', '.join(fargs)
     mapping = {
-        '__lt__': '{text} < {fargs}',
-        '__le__': '{text} <= {fargs}',
-        '__eq__': '{text} == {fargs}',
-        '__ne__': '{text} != {fargs}',
-        '__gt__': '{text} > {fargs}',
-        '__ge__': '{text} >= {fargs}',
+        operator.lt: '{text} < {fargs}',
+        operator.le: '{text} <= {fargs}',
+        operator.eq: '{text} == {fargs}',
+        operator.ne: '{text} != {fargs}',
+        operator.gt: '{text} > {fargs}',
+        operator.ge: '{text} >= {fargs}',
 
-        getattr: '{text}.{op.args[0]!s}', #Use original arg as string
-        '__getitem__': '{text}[{fargs}]',
-        '__contains__': '{fargs} in {text}',
-        '__call__': '{text}({fargs})',
+        getattr: '{text}.{args[0]!s}', #Use original arg as string
+        operator.getitem: '{text}[{fargs}]',
+        operator.contains: '{fargs} in {text}',
+        _operator_call: '{text}({fargs})',
 
-        '__add__': '{text} + {fargs}',
-        '__sub__': '{text} - {fargs}',
-        '__mul__': '{text} * {fargs}',
-        '__matmul__': '{text} @ {fargs}',
-        '__truediv__': '{text} / {fargs}',
-        '__floordiv__': '{text} // {fargs}',
-        '__mod__': '{text} % {fargs}',
-        '__divmod__': 'divmod({text}, {fargs})',
-        '__pow__': '{text} ** {fargs}',
-        '__lshift__': '{text} << {fargs}',
-        '__rshift__': '{text} >> {fargs}',
-        '__and__': '{text} & {fargs}',
-        '__xor__': '{text} ^ {fargs}',
-        '__or__': '{text} | {fargs}',
+        operator.add: '{text} + {fargs}',
+        operator.sub: '{text} - {fargs}',
+        operator.mul: '{text} * {fargs}',
+        operator.matmul: '{text} @ {fargs}',
+        operator.truediv: '{text} / {fargs}',
+        operator.floordiv: '{text} // {fargs}',
+        operator.mod: '{text} % {fargs}',
+        divmod: 'divmod({text}, {fargs})',
+        operator.pow: '{text} ** {fargs}',
+        operator.lshift: '{text} << {fargs}',
+        operator.rshift: '{text} >> {fargs}',
+        operator.and_: '{text} & {fargs}',
+        operator.xor: '{text} ^ {fargs}',
+        operator.or_: '{text} | {fargs}',
 
-        '__radd__': '{fargs} + {text}',
-        '__rsub__': '{fargs} - {text}',
-        '__rmul__': '{fargs} * {text}',
-        '__rmatmul__': '{fargs} @ {text}',
-        '__rtruediv__': '{fargs} / {text}',
-        '__rfloordiv__': '{fargs} // {text}',
-        '__rmod__': '{fargs} % {text}',
-        '__rdivmod__': 'divmod({fargs}, {text})',
-        '__rpow__': '{fargs} ** {text}',
-        '__rlshift__': '{fargs} << {text}',
-        '__rrshift__': '{fargs} >> {text}',
-        '__rand__': '{fargs} & {text}',
-        '__rxor__': '{fargs} ^ {text}',
-        '__ror__': '{fargs} | {text}',
+        _operator_radd: '{fargs} + {text}',
+        _operator_rsub: '{fargs} - {text}',
+        _operator_rmul: '{fargs} * {text}',
+        _operator_rmatmul: '{fargs} @ {text}',
+        _operator_rtruediv: '{fargs} / {text}',
+        _operator_rfloordiv: '{fargs} // {text}',
+        _operator_rmod: '{fargs} % {text}',
+        _operator_rdivmod: 'divmod({fargs}, {text})',
+        _operator_rpow: '{fargs} ** {text}',
+        _operator_rlshift: '{fargs} << {text}',
+        _operator_rrshift: '{fargs} >> {text}',
+        _operator_rand: '{fargs} & {text}',
+        _operator_rxor: '{fargs} ^ {text}',
+        _operator_ror: '{fargs} | {text}',
 
-        '__neg__': '-{text}',
-        '__pos__': '+{text}',
-        '__abs__': 'abs({text})',
-        '__invert__': '~{text}',
+        operator.neg: '-{text}',
+        operator.pos: '+{text}',
+        operator.abs: 'abs({text})',
+        operator.invert: '~{text}',
 
-        '__complex__': 'complex({text})',
-        '__int__': 'int({text})',
-        '__float__': 'float({text})',
-        '__index__': 'operator.index({text})',
+        complex: 'complex({text})',
+        int: 'int({text})',
+        float: 'float({text})',
 
-        '__float__': 'round({text})',
-        '__trunc__': 'math.trunc({text})',
-        '__floor__': 'math.floor({text})',
-        '__ceil__': 'math.ceil({text})',
+        operator.index: 'operator.index({text})',
+
+        float: 'round({text})',
+        math.trunc: 'math.trunc({text})',
+        math.floor: 'math.floor({text})',
+        math.ceil: 'math.ceil({text})',
     }
     template = mapping.get(op.func)
     if template is None:
-        return f'{text}.{op.func}({fargs})'
+        return f'{text}.{op.func!s}({fargs})'
     else:
-        return template.format(text=text, fargs=fargs, args=args, kwargs=kwargs)
+        return template.format(text=text, fargs=fargs, args=op.args)
 
 
 class ProxyMeta(type):
@@ -106,7 +126,7 @@ class ProxyMeta(type):
 
     def is_assignable(cls, proxy):
         return all(
-            op.func in [getattr, '__getattribute__', '__getitem__']
+            op.func in [getattr, operator.getitem]
             for op in proxy.__operations__
         )
 
@@ -115,21 +135,21 @@ class ProxyMeta(type):
             return False
 
         op = proxy.__operations__[0]
-        return op.func in ['__getattribute__', getattr] and op.args[0] == '_'
+        return op.func is getattr and op.args[0] == '_'
 
     def is_skip(cls, proxy):
         if len(proxy.__operations__) != 1:
             return False
 
         op = proxy.__operations__[0]
-        return op.func in [getattr, '__getattribute__', '__getitem__'] and op.args[0] == 'skip'
+        return op.func in [getattr, operator.getitem] and op.args[0] == 'skip'
 
     def is_lambda(cls, proxy):
         if len(proxy.__operations__) != 1:
             return False
 
         op = proxy.__operations__[0]
-        return op.func == '__getitem__' and callable(op.args[0])
+        return op.func is operator.getitem and callable(op.args[0])
 
     def apply(cls, obj, args):
         if isinstance(args, dict):
@@ -174,9 +194,9 @@ class ProxyMeta(type):
                     obj = op.func(obj, *op.args, **op.kwargs)
 
             op = proxy.__operations__[-1]
-            if op.func in [getattr, '__getattribute__']:
+            if op.func is getattr:
                 setattr(obj, op.args[0], value)
-            elif op.func == '__getitem__':
+            elif op.func is operator.getitem:
                 obj[op.args[0]] = value
 
             return orig_obj
@@ -187,7 +207,7 @@ class Proxy(metaclass=ProxyMeta):
         self.__operations__ = operations
 
     def __hash__(self):
-        hashable_funcs = [getattr, '__getattribute__', '__getitem__']
+        hashable_funcs = [getattr, operator.getitem]
         if not isinstance(self, AssignableProxy):
             unhashable_ops = ', '.join(
                 op.func for op in self.__operations__
@@ -211,79 +231,77 @@ class Proxy(metaclass=ProxyMeta):
             result = _format_op(result, op)
         return result
 
-    __lt__ = _op_appender('__lt__')
-    __le__ = _op_appender('__le__')
-    __eq__ = _op_appender('__eq__')
-    __ne__ = _op_appender('__ne__')
-    __gt__ = _op_appender('__gt__')
-    __ge__ = _op_appender('__ge__')
+    __lt__ = _op_appender(operator.lt)
+    __le__ = _op_appender(operator.le)
+    __eq__ = _op_appender(operator.eq)
+    __ne__ = _op_appender(operator.ne)
+    __gt__ = _op_appender(operator.gt)
+    __ge__ = _op_appender(operator.ge)
 
-    #Call main entry function instead of __getattr__
     __getattr__ = _op_appender(getattr)
-    __call__ = _op_appender('__call__')
-    __getitem__ = _op_appender('__getitem__')
-    __contains__ = _op_appender('__contains__')
+    __call__ = _op_appender(_operator_call)
+    __getitem__ = _op_appender(operator.getitem)
+    __contains__ = _op_appender(operator.contains)
 
-    __add__ = _op_appender('__add__')
-    __sub__ = _op_appender('__sub__')
-    __mul__ = _op_appender('__mul__')
-    __matmul__ = _op_appender('__matmul__')
-    __truediv__ = _op_appender('__truediv__')
-    __floordiv__ = _op_appender('__floordiv__')
-    __mod__ = _op_appender('__mod__')
-    __divmod__ = _op_appender('__divmod__')
-    __pow__ = _op_appender('__pow__')
-    __lshift__ = _op_appender('__lshift__')
-    __rshift__ = _op_appender('__rshift__')
-    __and__ = _op_appender('__and__')
-    __xor__ = _op_appender('__xor__')
-    __or__ = _op_appender('__or__')
+    __add__ = _op_appender(operator.add)
+    __sub__ = _op_appender(operator.sub)
+    __mul__ = _op_appender(operator.mul)
+    __matmul__ = _op_appender(operator.matmul)
+    __truediv__ = _op_appender(operator.truediv)
+    __floordiv__ = _op_appender(operator.floordiv)
+    __mod__ = _op_appender(operator.mod)
+    __divmod__ = _op_appender(divmod)
+    __pow__ = _op_appender(operator.pow)
+    __lshift__ = _op_appender(operator.lshift)
+    __rshift__ = _op_appender(operator.rshift)
+    __and__ = _op_appender(operator.and_)
+    __xor__ = _op_appender(operator.xor)
+    __or__ = _op_appender(operator.or_)
 
-    __radd__ = _op_appender('__radd__')
-    __rsub__ = _op_appender('__rsub__')
-    __rmul__ = _op_appender('__rmul__')
-    __rmatmul__ = _op_appender('__rmatmul__')
-    __rtruediv__ = _op_appender('__rtruediv__')
-    __rfloordiv__ = _op_appender('__rfloordiv__')
-    __rmod__ = _op_appender('__rmod__')
-    __rdivmod__ = _op_appender('__rdivmod__')
-    __rpow__ = _op_appender('__rpow__')
-    __rlshift__ = _op_appender('__rlshift__')
-    __rrshift__ = _op_appender('__rrshift__')
-    __rand__ = _op_appender('__rand__')
-    __rxor__ = _op_appender('__rxor__')
-    __ror__ = _op_appender('__ror__')
+    __radd__ = _op_appender(_operator_radd)
+    __rsub__ = _op_appender(_operator_rsub)
+    __rmul__ = _op_appender(_operator_rmul)
+    __rmatmul__ = _op_appender(_operator_rmatmul)
+    __rtruediv__ = _op_appender(_operator_rtruediv)
+    __rfloordiv__ = _op_appender(_operator_rfloordiv)
+    __rmod__ = _op_appender(_operator_rmod)
+    __rdivmod__ = _op_appender(_operator_rdivmod)
+    __rpow__ = _op_appender(_operator_rpow)
+    __rlshift__ = _op_appender(_operator_rlshift)
+    __rrshift__ = _op_appender(_operator_rrshift)
+    __rand__ = _op_appender(_operator_rand)
+    __rxor__ = _op_appender(_operator_rxor)
+    __ror__ = _op_appender(_operator_ror)
 
-    #Replace in-place operator with normal operator
-    __iadd__ = _op_appender('__add__')
-    __isub__ = _op_appender('__sub__')
-    __imul__ = _op_appender('__mul__')
-    __imatmul__ = _op_appender('__matmul__')
-    __itruediv__ = _op_appender('__truediv__')
-    __ifloordiv__ = _op_appender('__floordiv__')
-    __imod__ = _op_appender('__mod__')
-    __ipow__ = _op_appender('__pow__')
-    __ilshift__ = _op_appender('__lshift__')
-    __irshift__ = _op_appender('__rshift__')
-    __iand__ = _op_appender('__and__')
-    __ixor__ = _op_appender('__xor__')
-    __ior__ = _op_appender('__or__')
+    __iadd__ = _op_appender(operator.iadd)
+    __isub__ = _op_appender(operator.isub)
+    __imul__ = _op_appender(operator.imul)
+    __imatmul__ = _op_appender(operator.imatmul)
+    __itruediv__ = _op_appender(operator.itruediv)
+    __ifloordiv__ = _op_appender(operator.ifloordiv)
+    __imod__ = _op_appender(operator.imod)
+    __ipow__ = _op_appender(operator.ipow)
+    __ilshift__ = _op_appender(operator.ilshift)
+    __irshift__ = _op_appender(operator.irshift)
+    __iand__ = _op_appender(operator.iand)
+    __ixor__ = _op_appender(operator.ixor)
+    __ior__ = _op_appender(operator.ior)
 
-    __neg__ = _op_appender('__neg__')
-    __pos__ = _op_appender('__pos__')
-    __abs__ = _op_appender('__abs__')
-    __invert__ = _op_appender('__invert__')
+    __neg__ = _op_appender(operator.neg)
+    __pos__ = _op_appender(operator.pos)
+    __abs__ = _op_appender(operator.abs)
+    __invert__ = _op_appender(operator.invert)
 
-    __complex__ = _op_appender('__complex__')
-    __int__ = _op_appender('__int__')
-    __float__ = _op_appender('__float__')
+    __complex__ = _op_appender(complex)
+    __int__ = _op_appender(int)
+    __float__ = _op_appender(float)
 
-    __index__ = _op_appender('__index__')
+    __index__ = _op_appender(operator.index)
 
-    __round__ = _op_appender('__round__')
-    __trunc__ = _op_appender('__trunc__')
-    __floor__ = _op_appender('__floor__')
-    __ceil__ = _op_appender('__ceil__')
+    __round__ = _op_appender(round)
+    __trunc__ = _op_appender(math.trunc)
+    __floor__ = _op_appender(math.floor)
+    __ceil__ = _op_appender(math.ceil)
 
 
 class AbstractProxy(Proxy):
