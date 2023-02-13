@@ -1,0 +1,37 @@
+[project]
+name = "lyne"
+version = "0.0.1"
+description = "A Python processing pipeline"
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+authors = [
+	{name = "Shondoit Walker"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+]
+
+[project.urls]
+homepage = "https://github.com/Shondoit/lyne"
+repository = "https://github.com/Shondoit/lyne"
+
+[project.optional-dependencies]
+interactive = [
+	"jupyterlab>=3.5.2",
+]
+clip = [
+	"transformers>=4.26.0",
+]
+image = [
+	"matplotlib>=3.6.2",
+	"numpy>=1.24.0",
+	"opencv-python>=4.7.0.68",
+	"Pillow>=9.3.0",
+]
+	
+[build-system]
+requires = ["setuptools >= 42.0"]
+build-backend = "setuptools.build_meta"
