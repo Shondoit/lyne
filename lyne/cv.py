@@ -64,7 +64,7 @@ def save_image(image, path, overwrite=False):
         cv2.imwrite(str(path), image)
 
 
-@_core.Op.using(_core.O.image, _core.O.path, _core.O.skip)
+@_core.Op.using(_core.I.image, _core.I.path, _core.I.skip, __skip=False)
 def save_skipped_image(image, path, reason):
     if reason:
         path = path.parent / 'skip' / reason / path.name

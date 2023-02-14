@@ -4,10 +4,11 @@ import copy
 
 
 class Operation:
-    __slots__ = ('func', 'args', 'kwargs', 'output')
+    __slots__ = ('func', 'args', 'kwargs', 'output', 'skip')
 
     def __init__(self, func, *args, **kwargs):
         output = kwargs.pop('__output', None)
+        skip = kwargs.pop('__skip', True)
 
         assert callable(func), "func must be callable"
         assert Proxy.single_type_in(args + tuple(kwargs.values())), "Proxies must all be of same type"
@@ -16,6 +17,9 @@ class Operation:
         self.args = args
         self.kwargs = kwargs
         self.output = OutputMapping(output)
+        if skip and not callable(skip):
+            skip = lambda item: item.skip
+        self.skip = skip
 
     def __repr__(self):
         args = [repr(arg) for arg in self.args]
@@ -28,12 +32,25 @@ class Operation:
         else:
             return [self]
 
+    @property
+    def ignore_skipped(self):
+        return self(__skip=True)
+
+    @property
+    def only_skipped(self):
+        return self(__skip=lambda item: not item.skip)
+
+    @property
+    def all(self):
+        return self(__skip=False)
+
     def __call__(self, *args, **kwargs):
         kwargs = {**self.kwargs, **kwargs}
         return self.using(*self.args, *args, **kwargs)
 
     def using(self, *args, **kwargs):
         kwargs.setdefault('__output', self.output)
+        kwargs.setdefault('__skip', self.skip)
         return self.__class__(self.func, *args, **kwargs)
 
     def process(self, *args, **kwargs):
@@ -45,11 +62,9 @@ class Operation:
 
     def _call_gen(self, stream, *args, **kwargs):
         item_args = ItemProxy.instance_in((self.func,) + args + tuple(kwargs.values()))
-        #TODO: Fix hack
-        obj_args = OutputProxy.instance_in((self.func,) + args + tuple(kwargs.values()))
-        if item_args or obj_args:
+        if item_args:
             for item in stream:
-                if not obj_args and item.skip:
+                if self.skip and self.skip(item):
                     yield item
                 else:
                     new_args = Proxy.apply(item, args)
