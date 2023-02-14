@@ -10,6 +10,6 @@ O = OutputProxy()
 
 
 Op = OperationDecorator()
-Cond = Operation(lambda cond, reason: reason if cond else None) >> I.skip
+Cond = Operation(lambda cond, reason=True: reason if cond else None) >> I.skip
 
 Rel = RelativeValue(1.)
