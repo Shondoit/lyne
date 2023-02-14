@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 import os
-from pathlib import Path
+from pathlib import _Path
 
 
 def _scale_rect(rect, target, max_size):
@@ -57,9 +57,11 @@ def open_image(path):
 
 
 @_core.Op.using(_core.I.image, _core.I.path)
-def save_image(image, path):
-    os.makedirs(path.parent, exist_ok=True)
-    cv2.imwrite(str(path), image)
+def save_image(image, path, overwrite=False):
+    path = _Path(path)
+    if overwrite or not path.is_file():
+        os.makedirs(path.parent, exist_ok=True)
+        cv2.imwrite(str(path), image)
 
 
 @_core.Op.using(_core.O.image, _core.O.path, _core.O.skip)
