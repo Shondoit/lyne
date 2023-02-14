@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 import os
-from pathlib import _Path
+from pathlib import Path as _Path
 
 
 def _scale_rect(rect, target, max_size):
