@@ -66,9 +66,7 @@ class Operation:
             yield from self.output.gen_result(stream, result)
 
     def __rshift__(self, other):
-        kwargs = self.kwargs.copy()
-        kwargs['__output'] = other
-        return self.__class__(self.func, *self.args, **kwargs)
+        return self(__output=other)
 
     def __or__(self, other):
         ops = self._get_ops()
