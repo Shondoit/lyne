@@ -88,8 +88,13 @@ class SequentialOperation(Operation):
         return f'{self.__class__.__name__}({self.operations!r})'
 
     def __call__(self, *args, **kwargs):
-        first_op, *other_ops, last_op = self.operations
+        first_op, *other_ops = self.operations
         first_op = first_op(*args, **kwargs)
+        return self.__class__([first_op, *other_ops])
+
+    def using(self, *args, **kwargs):
+        first_op, *other_ops = self.operations
+        first_op = first_op.using(*args, **kwargs)
         return self.__class__([first_op, *other_ops])
 
     def process(self, *args, **keywords):
