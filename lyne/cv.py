@@ -130,12 +130,15 @@ def add_alpha_channel(image, alpha):
 @_core.Op >> _core.I.image
 def create_grid(*images):
     import math
-    from matplotlib import pyplot as plt
+    from matplotlib import pyplot as plt, colors
     from PIL import Image
     import io
 
     div = math.ceil(math.sqrt(len(images)))
     for index, im in enumerate(images):
+        if im is None:
+            continue
+
         if len(im.shape) > 2:
             channels = im.shape[2]
             if channels == 4:
@@ -144,7 +147,10 @@ def create_grid(*images):
                 im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
 
         plt.subplot(div, div, index + 1, frameon=False, aspect='equal')
-        plt.imshow(im)
+        if len(im.shape) == 2:
+            plt.imshow(im, cmap='coolwarm', norm=colors.TwoSlopeNorm(vcenter=0.))
+        else:
+            plt.imshow(im)
         plt.axis('off')
 
     plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
@@ -152,4 +158,5 @@ def create_grid(*images):
     plt.savefig(buffer, format='png')
     plt.close()
     buffer.seek(0)
-    return Image.open(buffer)
+    np_array = np.array(Image.open(buffer))
+    return  cv2.cvtColor(np_array, cv2.COLOR_RGB2BGR)
