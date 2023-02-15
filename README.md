@@ -98,6 +98,9 @@ pipe = (
         | Cond(I.attention.max() <= 0, 'no_face')
         | scale_array(I.attention, (0, 10%Rel.pos), (0, 255), clip=True) >> I.attention
         | Cond(I.attention.mean() < min_face_strength, 'small_face')
+        | scale_bbox(target_size)
+        | crop_image(I.bbox)
+        | resize_image(target_size)
 
     | generate_attention('a photo of multiple people')
         | Cond(I.attention.max() > 0, 'multi_people')
@@ -123,3 +126,9 @@ results = pipe.process(item)
 #list() will iterate over the entire generator
 list(results)
 ```
+
+# Proposed future additions
+
+- Add CLIP captioning
+- Add Depth module
+- Add Face detection module
