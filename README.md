@@ -35,6 +35,7 @@ pipe = (
         | Cond(I.attention.max() <= 0, 'no_face')
         | scale_array(I.attention, (0, 10%Rel.pos), (0, 255), clip=True) >> I.attention
         | Cond(I.attention.mean() < min_face_strength, 'small_face')
+        | get_mask_bbox(I.attention, padding=20)
         | scale_bbox(target_size)
         | crop_image(I.bbox)
         | resize_image(target_size)
