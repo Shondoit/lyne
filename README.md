@@ -133,3 +133,6 @@ Special cases exist for `Rel.pos` and `Rel.neg`. This will return the percentage
 - Add CLIP captioning
 - Add Depth module
 - Add Face detection module
+- Add progress bar
+- Add BBox/Rect objects
+- Add Aspect Ratio object
