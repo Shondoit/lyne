@@ -119,6 +119,65 @@ def show_image(image):
 
 
 @_core.Op.using(_core.I.image) >> _core.I.image
+def resize_image(image, size):
+    return cv2.resize(image, size)
+
+
+@_core.Op.using(_core.I.image) >> _core.I.image
+def crop_image(image, area, focal_point=None):
+    if len(area) == 4:
+        x0, y0, x1, y1 = area
+    else:
+        if focal_point is None:
+            focal_point = (50%Rel, 50%Rel)
+        h, w, *_ = image.shape
+        focal_point = (
+            _core.Value.to_abs(focal_point[0], w),
+            _core.Value.to_abs(focal_point[1], h),
+        )
+        x0 = focal_point[0] - area[0] // 2
+        x1 = x0 + area[0]
+        y0 = focal_point[1] - area[1] // 2
+        y1 = y0 + area[1]
+
+    return image[y0:y1, x0:x1]
+
+
+@_core.Op >> _core.I.bbox
+def get_mask_bbox(mask, threshold=None, padding=None):
+    if threshold is None:
+        threshold = (mask.min() + mask.max()) / 2
+    else:
+        treshold = _core.Value.to_abs(threshold, mask.min(), mask.max())
+
+    _, mask = cv2.threshold(mask, threshold, 255, 0)
+    coords = cv2.findNonZero(mask)
+    x, y, w, h = cv2.boundingRect(coords)
+    cur_h, cur_w, *_ = mask.shape
+    if padding:
+        x = max(0, x - _core.Value.to_abs(padding, cur_w))
+        y = max(0, y - _core.Value.to_abs(padding, cur_h))
+        w = min(cur_w, w + 2 * _core.Value.to_abs(padding, cur_w))
+        h = min(cur_h, h + 2 * _core.Value.to_abs(padding, cur_h))
+
+    return x, y, x + w, y + h
+
+
+@_core.Op.using(_core.I.image, _core.I.bbox) >> _core.I.bbox
+def scale_bbox(image, rect, target):
+    max_size = (image.shape[1], image.shape[0])
+    return _scale_rect(rect, target, max_size)
+
+
+@_core.Op.using(_core.I.image, _core.I.bbox) >> _core.I.image
+def draw_rect(image, rect, color=(0, 0, 0), thickness=2):
+    image = image.copy()
+    left, top, right, bottom = (int(item) for item in rect)
+    cv2.rectangle(image, (left, top), (right, bottom), color, thickness)
+    return image
+
+
+@_core.Op.using(_core.I.image) >> _core.I.image
 def add_alpha_channel(image, alpha):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
     alpha = np.uint8(alpha.clip(0, 255))
