@@ -8,6 +8,15 @@ import numpy as np
 #    for item in tqdm.tqdm(list(stream)):
 #        yield item
 
+
+@_core.Op.using(_core.S) >> _core.S
+def shuffle(stream):
+    import random
+    result = list(stream)
+    random.shuffle(result)
+    return result
+
+
 @_core.Op >> _core.I.skip
 def cond_size(arr, min_size=None, max_size=None):
     if min_size and any(dim < lim for dim, lim in zip(arr.shape, min_size) if lim != -1):
