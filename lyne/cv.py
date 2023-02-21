@@ -177,6 +177,21 @@ def draw_rect(image, rect, color=(0, 0, 0), thickness=2):
     return image
 
 
+@_core.Op.using(_core.I.image.shape) >> _core.I.gradient
+def create_gradient(shape, exp=2, max_val=1.):
+    shape = shape[:2]
+    if exp == 0:
+        gradient = np.full(shape, max_val)
+    else:
+        cx = shape[1] // 2
+        cy = shape[0] // 2
+        f = lambda y, x:  -abs(y - cy) ** exp - abs(x - cx) ** exp
+        gradient = np.fromfunction(f, shape)
+        gradient -= gradient.min()
+        gradient *= max_val / gradient.max()
+    return gradient
+
+
 @_core.Op.using(_core.I.image) >> _core.I.image
 def add_alpha_channel(image, alpha):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
