@@ -1,12 +1,11 @@
 from . import _core
 import numpy as np
 
-#@_core.Op.using(_core.S) >> _core.S
-#def progress(stream):
-#    #TODO: FIX
-#    import tqdm
-#    for item in tqdm.tqdm(list(stream)):
-#        yield item
+@_core.Op.using(_core.S) >> _core.S
+def progress(stream):
+    import tqdm
+    for item in tqdm.tqdm(list(stream)):
+        yield item
 
 
 @_core.Op.using(_core.S) >> _core.S
