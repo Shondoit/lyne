@@ -54,9 +54,12 @@ class Operation:
         return self.__class__(self.func, *args, **kwargs)
 
     def process(self, *args, **kwargs):
-        stream, *args = args
-        if not isinstance(stream, Stream):
-            stream = Stream([stream])
+        if not args:
+            stream = Stream([Item()])
+        else:
+            stream, *args = args
+            if not isinstance(stream, Stream):
+                stream = Stream([stream])
         new_kwargs = {**self.kwargs, **kwargs}
         return Stream(self._call_gen(stream, *self.args, *args, **new_kwargs))
 
