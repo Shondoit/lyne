@@ -70,12 +70,16 @@ class Operation:
                 if self.skip and self.skip(item):
                     yield item
                 else:
-                    new_args = Proxy.apply(item, args)
-                    new_kwargs = Proxy.apply(item, kwargs)
-                    result = Proxy.get_value(self.func, item) if isinstance(self.func, Proxy) else self.func
-                    if callable(result):
-                        result = result(*new_args, **new_kwargs)
-                    yield from self.output.gen_result(item, result)
+                    try:
+                        new_args = Proxy.apply(item, args)
+                        new_kwargs = Proxy.apply(item, kwargs)
+                        result = Proxy.get_value(self.func, item) if isinstance(self.func, Proxy) else self.func
+                        if callable(result):
+                            result = result(*new_args, **new_kwargs)
+                        yield from self.output.gen_result(item, result)
+                    except Exception as e:
+                        item.skip = str(e)
+                        yield item
         else:
             args = Proxy.apply(stream, args)
             kwargs = Proxy.apply(stream, kwargs)
