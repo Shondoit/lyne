@@ -64,8 +64,16 @@ def scale_array(arr, source_range=None, target_range=None, clip=False):
     arr_max = arr.max()
     arr_range = arr_max - arr_min
 
-    src_min, src_max = _core.Value.to_abs(source_range, arr_min, arr_max)
-    tgt_min, tgt_max = _core.Value.to_abs(target_range, arr_min, arr_max)
+    if source_range is None:
+        src_min, src_max = (arr_min, arr_max)
+    else:
+        src_min, src_max = _core.Value.to_abs(source_range, arr_min, arr_max)
+
+    if target_range is None:
+        tgt_min, tgt_max = (arr_min, arr_max)
+    else:
+        tgt_min, tgt_max = _core.Value.to_abs(target_range, arr_min, arr_max)
+
     if src_min is None: src_min = arr_min
     if src_max is None: src_max = arr_max
     if tgt_min is None: tgt_min = arr_min
