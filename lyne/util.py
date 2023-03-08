@@ -81,7 +81,8 @@ def scale_array(arr, source_range=None, target_range=None, clip=False):
 
     assert src_max >= src_min, f'{src_max} is less than {src_min}'
     assert tgt_max >= tgt_min, f'{tgt_max} is less than {tgt_min}'
-    arr = tgt_min + (tgt_max - tgt_min) * (arr - src_min) / (src_max - src_min)
+    slope = (arr - src_min) / (src_max - src_min)
+    arr = tgt_min + (tgt_max - tgt_min) * slope
     if clip:
         arr = arr.clip(tgt_min, tgt_max)
     return arr
