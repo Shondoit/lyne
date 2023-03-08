@@ -19,6 +19,11 @@ def list_dir(path, extensions=None, recursive=False):
 
 
 @_core.Op.using(_core.I.path) >> _core.I.path
+def change_filename(cur_path, new_filename):
+    return _Path(cur_path).parent / new_filename
+
+
+@_core.Op.using(_core.I.path) >> _core.I.path
 def change_dir(cur_path, new_dir):
     return _Path(new_dir) / _Path(cur_path).name
 
