@@ -6,7 +6,7 @@ import os
 from pathlib import Path as _Path
 
 
-def _scale_rect(rect, target, max_size):
+def _scale_rect(rect, target, max_size, scale_to_max=False):
     if len(rect) == 4:
         x0, y0, x1, y1 = rect
     else:
@@ -20,13 +20,19 @@ def _scale_rect(rect, target, max_size):
     tw, th = target
     mw, mh = max_size
 
-    sx = max(1., w / tw)
-    sy = max(1., h / th)
-    s = max(sx, sy)
+    if scale_to_max:
+        sx = max(1., w / mw)
+        sy = max(1., h / mh)
+        s = min(sx, sy)
+    else:
+        sx = max(1., w / tw)
+        sy = max(1., h / th)
+        s = max(sx, sy)
 
-    sx = min(s, mw / tw)
-    sy = min(s, mh / th)
-    s = min(sx, sy)
+        sx = min(s, mw / tw)
+        sy = min(s, mh / th)
+        s = min(sx, sy)
+
     nw = s * tw
     nh = s * th
 
@@ -164,9 +170,9 @@ def get_mask_bbox(mask, threshold=None, padding=None):
 
 
 @_core.Op.using(_core.I.image, _core.I.bbox) >> _core.I.bbox
-def scale_bbox(image, rect, target):
+def scale_bbox(image, rect, target, scale_to_max=False):
     max_size = (image.shape[1], image.shape[0])
-    return _scale_rect(rect, target, max_size)
+    return _scale_rect(rect, target, max_size, scale_to_max)
 
 
 @_core.Op.using(_core.I.image, _core.I.bbox) >> _core.I.image
