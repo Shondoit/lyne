@@ -13,7 +13,7 @@ from lyne.clip import *
 def main(args):
     pipe = (
         # Load all images from source dir
-        list_dir.using(args.input_dir, extensions=['.jpg', '.png'])
+        list_dir.using(args.input_dir, extensions=['.jpg', '.jpeg', '.png'])
         | progress
         | open_image
     )
@@ -40,7 +40,10 @@ def main(args):
         | save_image(overwrite=args.overwrite)
     )
 
-    list(pipe.process())
+    with open(os.path.join(args.output_dir, 'skip.txt'), 'w') as output_file:
+        for item in pipe.process():
+            if item.skip:
+                output_file.write(f'{item.path}: {item.skip}\n')
 
 
 if __name__ == '__main__':
